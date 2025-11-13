@@ -8,11 +8,10 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("Loading Mazes...");
         readMazes();
-
     }
 
     static void readMazes(){
-        for (int i = 1; i < 5; i++){
+        for (int i = 1; i <= 5; i++){
             String filename = "mazes/maze" + i + ".maze";
             ArrayList<String> mazeData = new ArrayList<>();
             try {
@@ -29,7 +28,6 @@ public class Main {
 
 
             } catch (IOException e) {
-                System.out.println("Could not open file: " + filename);
                 continue;
             }
 
@@ -40,12 +38,10 @@ public class Main {
             }
             else if (type.equals("c")){
                 ComplexMaze cm = new ComplexMaze();
-                cm.readMaze(mazeData);
                 mazes.add(cm);
             }
             else if (type.equals("w")){
                 WeightedMaze wm = new WeightedMaze();
-                wm.readMaze(mazeData);
                 mazes.add(wm);
             }
         }

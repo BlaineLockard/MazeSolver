@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public abstract class Maze {
@@ -42,23 +43,50 @@ public abstract class Maze {
         protected boolean isStart = false;
         protected boolean isEnd = false;
         protected boolean visited = false;
-        protected ArrayList<Cell> neighbors = new ArrayList<>();
+        protected Cell northNeighbor = null;
+        protected Cell southNeighbor = null;
+        protected Cell eastNeighbor = null;
+        protected Cell westNeighbor = null;
+        protected int[] position = new int[2];
 
         public Cell() {
         }
 
-        public Cell(boolean isStart, boolean isEnd) {
+        public Cell(boolean isStart, boolean isEnd, int row, int col) {
             this.isStart = isStart;
             this.isEnd = isEnd;
+            this.position[0] = row;
+            this.position[1] = col;
         }
 
         public void visit() {this.visited = true;}
 
-        public Cell getNeighbor(int index) {return neighbors.get(index);}
-        public void addNeighbor(Cell neighbor) {this.neighbors.add(neighbor);}
-        public int degree() {return neighbors.size();}
-        public void clear() {this.neighbors.clear();}
-        public void removeNeighbor(int index) {this.neighbors.remove(index);}
+        public void clear(){
+            northNeighbor = null;
+            southNeighbor = null;
+            eastNeighbor = null;
+            westNeighbor = null;
+        }
+        public ArrayList<Cell> neighbors() {
+            ArrayList<Cell> neighbors = new ArrayList<>();
+            if (northNeighbor != null) neighbors.add(northNeighbor);
+            if (southNeighbor != null) neighbors.add(southNeighbor);
+            if (eastNeighbor != null) neighbors.add(eastNeighbor);
+            if (westNeighbor != null) neighbors.add(westNeighbor);
+            return neighbors;
+        }
+        public int degree() {
+            int degree = 0;
+            if (northNeighbor != null) degree++;
+            if (southNeighbor != null) degree++;
+            if (eastNeighbor != null) degree++;
+            if (westNeighbor != null) degree++;
+            return degree;
+        }
+        public Cell getNorthNeighbor() {return northNeighbor;}
+        public Cell getSouthNeighbor() {return southNeighbor;}
+        public Cell getEastNeighbor() {return eastNeighbor;}
+        public Cell getWestNeighbor() {return westNeighbor;}
 
         public boolean isStart() {return isStart;}
         public boolean isEnd() {return isEnd;}

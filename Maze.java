@@ -1,5 +1,5 @@
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.io.IOException;
 
 public abstract class Maze {
     protected double time;
@@ -22,9 +22,8 @@ public abstract class Maze {
     }
 
 
-    public void printMaze() {
-
-    }
+    public abstract void printMaze();
+    public abstract void saveMaze(String fileName) throws IOException;
 
     public abstract void readMaze(ArrayList<String> mazeData);
     public abstract void generateMaze();
@@ -87,6 +86,10 @@ public abstract class Maze {
         public Cell getSouthNeighbor() {return southNeighbor;}
         public Cell getEastNeighbor() {return eastNeighbor;}
         public Cell getWestNeighbor() {return westNeighbor;}
+        public boolean hasNorth(){return northNeighbor != null;}
+        public boolean hasEast(){return eastNeighbor != null;}
+        public boolean hasWest(){return westNeighbor != null;}
+        public boolean hasSouth(){return southNeighbor != null;}
 
         public boolean isStart() {return isStart;}
         public boolean isEnd() {return isEnd;}

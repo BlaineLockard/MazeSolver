@@ -1,11 +1,16 @@
 import java.util.ArrayList;
+import java.io.PrintWriter;
+import java.io.IOException;
 
 public class SimpleMaze extends Maze {
     // a maze with one path from start to finish
+
+    public SimpleMaze(){
+        super();
+    }
     
     public SimpleMaze(ArrayList<String> mazeData){
         readMaze(mazeData);
-        printMaze();
     }
 
     public void generateMaze(){
@@ -40,7 +45,7 @@ public class SimpleMaze extends Maze {
             createCell(0, 0, cellData);
 
             
-            //System.out.println(maze[0][0].neighbors);
+            //System.out.println(maze[0][0].degree());
 
         } catch (Exception e){
             System.out.println("Error reading maze data: " + e);
@@ -105,15 +110,15 @@ public class SimpleMaze extends Maze {
             for(int i = 0; i < 3; i++){
                 for(int c = 0; c < colls; c++){
                     if(i == 0){
-                        if (maze[r][c].northNeighbor != null){
-                            System.out.print("  |  ");
+                        if (maze[r][c].hasNorth()){
+                            System.out.print("  |   ");
                         }
                         else{
-                            System.out.print("     ");
+                            System.out.print("      ");
                         }
                     }
                     else if(i == 1){
-                        if(maze[r][c].westNeighbor != null){
+                        if(maze[r][c].hasWest()){
                             System.out.print("--");
                         }
                         else{
@@ -121,19 +126,19 @@ public class SimpleMaze extends Maze {
                         }
 
                         if(maze[r][c].isStart()){
-                            System.out.print("\u001B[32m" + maze[r][c].degree() + "\u001B[0m");
+                            System.out.print("\u001B[32m〇\u001B[0m");
                         }
                         else if(maze[r][c].isEnd()){
-                            System.out.print("\u001B[31m" + maze[r][c].degree() + "\u001B[0m");
+                            System.out.print("\u001B[31m〇\u001B[0m");
                         }
                         else if(maze[r][c].isVisited()){
-                            System.out.print("\033[0;1m" + maze[r][c].degree() + "\u001B[0m");
+                            System.out.print("\u001B[34m〇\u001B[0m");
                         }
                         else{
-                            System.out.print(maze[r][c].degree());
+                            System.out.print("〇");
                         }
 
-                        if(maze[r][c].eastNeighbor != null){
+                        if(maze[r][c].hasEast()){
                             System.out.print("--");
                         }
                         else{
@@ -141,11 +146,11 @@ public class SimpleMaze extends Maze {
                         }
                     }
                     else if (i == 2){
-                       if(maze[r][c].southNeighbor != null){
-                        System.out.print("  |  ");
+                       if(maze[r][c].hasSouth()){
+                        System.out.print("  |   ");
                        }
                         else{
-                            System.out.print("     ");
+                            System.out.print("      ");
                         }
                     }
                     
@@ -166,5 +171,41 @@ public class SimpleMaze extends Maze {
                 System.out.println();
             }
         */
+    }
+
+    public void saveMaze(String fileName) throws IOException{
+        PrintWriter outFile = new PrintWriter(fileName);
+
+        outFile.println(this.rows + "," + this.colls + "," + this.mazeType + "," + this.time);
+        for(int r = 0; r < this.rows; r++){
+            for(int c = 0; c < this.colls; c++){
+                if(maze[r][c].isStart()){
+                    outFile.print("1 0");
+                }
+                else if (maze[r][c].isEnd()){
+                    outFile.print("0 1");
+                }
+                else{
+                    outFile.print("0 0");
+                }
+                if(maze[r][c].hasNorth()){
+                    outFile.print(" " + maze[r][c].northNeighbor.position[0] + "-" + maze[r][c].northNeighbor.position[1]);
+                }
+                if(maze[r][c].hasWest()){
+                    outFile.print(" " + maze[r][c].westNeighbor.position[0] + "-" + maze[r][c].westNeighbor.position[1]);
+                }
+                if(maze[r][c].hasEast()){
+                    outFile.print(" " + maze[r][c].eastNeighbor.position[0] + "-" + maze[r][c].eastNeighbor.position[1]);
+                }
+                if(maze[r][c].hasSouth()){
+                    outFile.print(" " + maze[r][c].southNeighbor.position[0] + "-" + maze[r][c].southNeighbor.position[1]);
+                }
+                if(c != colls-1)
+                    outFile.print(",");
+            }
+            outFile.print("\n");
+        }
+
+        outFile.close();
     }
 }

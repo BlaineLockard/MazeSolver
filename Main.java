@@ -8,6 +8,16 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("Loading Mazes...");
         readMazes();
+
+        for(int i = 1; i < mazes.size()+1; i++){
+            try{
+                mazes.get(i-1).printMaze();
+                mazes.get(i-1).saveMaze("mazes/maze" + i + ".maze");
+            }
+            catch(IOException e){
+                System.out.println("Error saving maze " + i + ": " + e.getMessage());
+            }
+    }
     }
 
     static void readMazes(){
@@ -37,11 +47,11 @@ public class Main {
                 mazes.add(sm);
             }
             else if (type.equals("c")){
-                ComplexMaze cm = new ComplexMaze();
+                ComplexMaze cm = new ComplexMaze(mazeData);
                 mazes.add(cm);
             }
             else if (type.equals("w")){
-                WeightedMaze wm = new WeightedMaze();
+                WeightedMaze wm = new WeightedMaze(mazeData);
                 mazes.add(wm);
             }
         }

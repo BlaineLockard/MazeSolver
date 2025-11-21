@@ -1,11 +1,13 @@
 import java.util.ArrayList;
 
-public class ComplexMaze extends Maze {
+public class ComplexMaze extends SimpleMaze {
     // a maze with multiple paths to the end
-    public void generateMaze(){
 
+    public ComplexMaze(ArrayList<String> mazeData){
+        readMaze(mazeData);
     }
-    public void readMaze(ArrayList<String> mazeData){
+
+    public void generateMaze(){
 
     }
     public boolean solveMaze(){

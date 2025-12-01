@@ -13,9 +13,12 @@ public class SimpleMaze extends Maze {
         readMaze(mazeData);
     }
 
+    
     public void generateMaze(){
 
     }
+    
+
     public void readMaze(ArrayList<String> mazeData){
         try{
             this.rows = Integer.parseInt(mazeData.get(0));
@@ -52,6 +55,7 @@ public class SimpleMaze extends Maze {
         }
     }
     
+
     public Cell createCell(int r, int c, String[][] cellData){
         if (maze[r][c] != null){ 
             //System.out.println("Cell at (" + r + ", " + c + ") already created.");
@@ -60,15 +64,19 @@ public class SimpleMaze extends Maze {
         //System.out.println("Creating cell at (" + r + ", " + c + ")");
         boolean isStart = false;
         boolean isEnd = false;
+        boolean visited = false;
         if (cellData[r][c].charAt(0) == '1'){
             isStart = true;
         }
         else if (cellData[r][c].charAt(2) == '1'){
             isEnd = true;
         }
-        Cell newCell = new Cell(isStart, isEnd, r, c);
-        int startIdx = 4;
-        int endIdx = 7;
+        if (cellData[r][c].charAt(4) == '1'){
+            visited = true;
+        }
+        Cell newCell = new Cell(isStart, isEnd, visited, r, c);
+        int startIdx = 6;
+        int endIdx = 9;
         maze[r][c] = newCell;
         while(endIdx <= cellData[r][c].length()){
             String neighbor = cellData[r][c].substring(startIdx, endIdx);
@@ -96,25 +104,56 @@ public class SimpleMaze extends Maze {
         return newCell;
     }
 
-    public boolean solveMaze(){
+
+    public void solveMaze(){
         long startTime = System.currentTimeMillis();
+        Cell currentCell = null;
+        for(int r = 0; r < rows; r++){
+            for(int c = 0; c < colls; c++){
+                if(maze[r][c].isStart()){
+                    currentCell = maze[r][c];
+                    break;
+                }
+            }
+        }
 
+        traverse(currentCell);
 
-        long endTime = System.currentTimeMillis();
-        time = (startTime - endTime)/1000.0;
-        return true;
+        time = (System.currentTimeMillis() - startTime) / 1000.0;
+        if (time <= 0.0){
+            time = 0.01;
+        }
+        System.out.println("Maze solved in " + time + " seconds.");
     }
 
+
+    public boolean traverse(Cell cell){
+        cell.setVisit(true);
+        if(cell.isEnd()){
+            return true;
+        }
+        for(Cell neighbor : cell.neighbors()){
+            if(!neighbor.isVisited()){
+                if(traverse(neighbor)){
+                    return true;
+                }
+            }
+        }
+        cell.setVisit(false);
+        return false;
+    }
+
+    
     public void printMaze(){
         for(int r = 0; r < rows; r++){
             for(int i = 0; i < 3; i++){
                 for(int c = 0; c < colls; c++){
                     if(i == 0){
                         if (maze[r][c].hasNorth()){
-                            System.out.print("  |   ");
+                            System.out.print("  |  ");
                         }
                         else{
-                            System.out.print("      ");
+                            System.out.print("     ");
                         }
                     }
                     else if(i == 1){
@@ -126,16 +165,16 @@ public class SimpleMaze extends Maze {
                         }
 
                         if(maze[r][c].isStart()){
-                            System.out.print("\u001B[32m〇\u001B[0m");
+                            System.out.print("\u001B[32m\u004f\u001B[0m");
                         }
                         else if(maze[r][c].isEnd()){
-                            System.out.print("\u001B[31m〇\u001B[0m");
+                            System.out.print("\u001B[31m\u004f\u001B[0m");
                         }
                         else if(maze[r][c].isVisited()){
-                            System.out.print("\u001B[34m〇\u001B[0m");
+                            System.out.print("\u001B[34m\u004f\u001B[0m");
                         }
                         else{
-                            System.out.print("〇");
+                            System.out.print("\u004f");
                         }
 
                         if(maze[r][c].hasEast()){
@@ -147,10 +186,10 @@ public class SimpleMaze extends Maze {
                     }
                     else if (i == 2){
                        if(maze[r][c].hasSouth()){
-                        System.out.print("  |   ");
+                        System.out.print("  |  ");
                        }
                         else{
-                            System.out.print("      ");
+                            System.out.print("     ");
                         }
                     }
                     
@@ -173,6 +212,7 @@ public class SimpleMaze extends Maze {
         */
     }
 
+
     public void saveMaze(String fileName) throws IOException{
         PrintWriter outFile = new PrintWriter(fileName);
 
@@ -188,6 +228,14 @@ public class SimpleMaze extends Maze {
                 else{
                     outFile.print("0 0");
                 }
+
+                if(maze[r][c].isVisited()){
+                    outFile.print(" 1");
+                }
+                else{
+                    outFile.print(" 0");
+                }
+
                 if(maze[r][c].hasNorth()){
                     outFile.print(" " + maze[r][c].northNeighbor.position[0] + "-" + maze[r][c].northNeighbor.position[1]);
                 }
@@ -200,6 +248,7 @@ public class SimpleMaze extends Maze {
                 if(maze[r][c].hasSouth()){
                     outFile.print(" " + maze[r][c].southNeighbor.position[0] + "-" + maze[r][c].southNeighbor.position[1]);
                 }
+
                 if(c != colls-1)
                     outFile.print(",");
             }

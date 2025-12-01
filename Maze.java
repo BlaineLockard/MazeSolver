@@ -12,13 +12,13 @@ public abstract class Maze {
     public Maze(){
         this.rows = 5;
         this.colls = 5;
-        generateMaze();
+        this.generateMaze();
     }
     public Maze(int rows, int colls, char mazeType){
         this.rows = rows;
         this.colls = colls;
         this.mazeType = mazeType;
-        generateMaze();
+        this.generateMaze();
     }
 
 
@@ -27,7 +27,7 @@ public abstract class Maze {
 
     public abstract void readMaze(ArrayList<String> mazeData);
     public abstract void generateMaze();
-    public abstract boolean solveMaze();
+    public abstract void solveMaze();
 
     public double getTime() {return time;}
     public int getWidth() {return rows;}
@@ -51,14 +51,15 @@ public abstract class Maze {
         public Cell() {
         }
 
-        public Cell(boolean isStart, boolean isEnd, int row, int col) {
+        public Cell(boolean isStart, boolean isEnd, boolean visited, int row, int col) {
             this.isStart = isStart;
             this.isEnd = isEnd;
+            this.visited = visited;
             this.position[0] = row;
             this.position[1] = col;
         }
 
-        public void visit() {this.visited = true;}
+        public void setVisit(boolean v) {this.visited = v;}
 
         public void clear(){
             northNeighbor = null;

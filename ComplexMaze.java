@@ -3,6 +3,10 @@ import java.util.ArrayList;
 public class ComplexMaze extends SimpleMaze {
     // a maze with multiple paths to the end
 
+    public ComplexMaze(){
+        super();
+    }
+
     public ComplexMaze(ArrayList<String> mazeData){
         readMaze(mazeData);
     }
@@ -10,7 +14,8 @@ public class ComplexMaze extends SimpleMaze {
     public void generateMaze(){
 
     }
-    public boolean solveMaze(){
-        return false;
-    }
-}
+    
+    // find all pathes and choose the shortest
+    
+
+}   

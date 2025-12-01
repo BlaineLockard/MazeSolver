@@ -9,8 +9,12 @@ public class Main {
         System.out.println("Loading Mazes...");
         readMazes();
 
+
         for(int i = 1; i < mazes.size()+1; i++){
             try{
+                if (mazes.get(i-1).getTime() <= 0.0){
+                    mazes.get(i-1).solveMaze();
+                }
                 mazes.get(i-1).printMaze();
                 mazes.get(i-1).saveMaze("mazes/maze" + i + ".maze");
             }
@@ -21,7 +25,7 @@ public class Main {
     }
 
     static void readMazes(){
-        for (int i = 1; i <= 5; i++){
+        for (int i = 1; i <= 10; i++){
             String filename = "mazes/maze" + i + ".maze";
             ArrayList<String> mazeData = new ArrayList<>();
             try {

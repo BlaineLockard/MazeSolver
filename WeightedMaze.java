@@ -1,10 +1,15 @@
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class WeightedMaze extends ComplexMaze {
-    public class WeightedCell extends Cell {
+    public class WeightedCell extends Maze.Cell {
         private double weight;
+        protected  WeightedCell northNeighbor = null;
+        protected WeightedCell southNeighbor = null;
+        protected WeightedCell eastNeighbor = null;
+        protected WeightedCell westNeighbor = null;
 
         public WeightedCell() {
             super();
@@ -18,13 +23,14 @@ public class WeightedMaze extends ComplexMaze {
             super(start, end, isVisited, r, c);
             this.weight = weight;
         }
-
+        
         public double getWeight() {return weight;}
-        public void setWeight(int weight) {this.weight = weight;}
+        public void setWeight(double weight) {this.weight = weight;}
     }
 
     // a maze with weighted paths
-    WeightedCell[][] maze;
+    private WeightedCell[][] maze;
+    private double cost;
 
     public WeightedMaze(){
         super();
@@ -51,20 +57,10 @@ public class WeightedMaze extends ComplexMaze {
                 }
                 System.out.println();
             }
-            /* 
-            for(int r = 0; r < rows; r++){
-                for(int c = 0; c < colls; c++){
-                    System.out.print(cellData[r][c] + ", ");
-                }
-                System.out.println();
-            }
-            */
+
             // Initialize maze array and add cells
             this.maze = new WeightedCell[rows][colls];
             createCell(0, 0, cellData);
-
-            
-            //System.out.println(maze[0][0].degree());
 
         } catch (Exception e){
             System.out.println("Error reading maze data: " + e);
@@ -75,14 +71,12 @@ public class WeightedMaze extends ComplexMaze {
     @Override
     public WeightedCell createCell(int r, int c, String[][] cellData){
         if (maze[r][c] != null){ 
-            //System.out.println("Cell at (" + r + ", " + c + ") already created.");
             return maze[r][c];
         }
-        //System.out.println("Creating cell at (" + r + ", " + c + ")");
         boolean isStart = false;
         boolean isEnd = false;
         boolean visited = false;
-        double weight = Double.parseDouble(cellData[r][c].substring(6, 8));
+        double weight = Double.parseDouble(cellData[r][c].substring(6, 10));
 
         if (cellData[r][c].charAt(0) == '1'){
             isStart = true;
@@ -94,15 +88,15 @@ public class WeightedMaze extends ComplexMaze {
             visited = true;
         }
         WeightedCell newCell = new WeightedCell(isStart, isEnd, visited, r, c, weight);
-        System.out.print("Creating WeightedCell at (" + r + ", " + c + ") with weight " + weight + "\n");
+        System.out.print(cellData[r][c] + "\n");
         int startIdx = 10;
         int endIdx = 13;
         maze[r][c] = newCell;
         while(endIdx <= cellData[r][c].length()){
             String neighbor = cellData[r][c].substring(startIdx, endIdx);
-            System.out.print(cellData[r][c] + " -> Neighbor: " + neighbor + "\n");
             int neighborRow = neighbor.charAt(0) - 48;
             int neighborColl = neighbor.charAt(2) - 48;
+
             if(neighborRow == r-1 && neighborColl == c){ // North
                 newCell.northNeighbor = createCell(neighborRow, neighborColl, cellData);
             }
@@ -130,7 +124,57 @@ public class WeightedMaze extends ComplexMaze {
     }
 
     public void solveMaze(){
-        return;
+        long startTime = System.currentTimeMillis();
+        WeightedCell startCell = null;
+        WeightedCell endCell = null;
+
+        // Find start and end cells
+        for(int r = 0; r < rows; r++){
+            for(int c = 0; c < colls; c++){
+                if(maze[r][c].isStart()){
+                    startCell = maze[r][c];
+                }
+                else if(maze[r][c].isEnd()){
+                    endCell = maze[r][c];
+                }
+            }
+        }
+
+        if(startCell == null || endCell == null){
+            System.out.println("Start or end cell not found in the maze.");
+            return;
+        }
+
+        dijkstraSolve(startCell);
+
+        time = (System.currentTimeMillis() - startTime) / 1000.0;
+    }
+
+    private boolean dijkstraSolve(WeightedCell cellAt){
+        cellAt.setVisited(true);
+        cost += cellAt.getWeight();
+        double shortestNeighborWeight = Double.MAX_VALUE;
+        WeightedCell nextCell = null;
+
+        for(int i = 0; i < cellAt.degree(); i++){
+            WeightedCell neighbor = (WeightedMaze.WeightedCell)cellAt.neighbors().get(i);
+            if(neighbor.isEnd()){
+                cost += neighbor.getWeight();
+                return true;
+            }
+            if(!neighbor.isVisited() && neighbor.getWeight() < shortestNeighborWeight){
+                shortestNeighborWeight = neighbor.getWeight();
+                nextCell = neighbor;
+            }
+        }
+        if(nextCell != null){
+            if(dijkstraSolve(nextCell)){
+                return true;
+            }
+        }
+        cellAt.setVisited(false);
+        cost -= cellAt.getWeight();
+        return false;
     }
 
     public void printMaze(){
@@ -233,4 +277,9 @@ public class WeightedMaze extends ComplexMaze {
 
         outFile.close();
     }
+
+    public double getCost() {
+        return cost;
+    }
 }
+ 

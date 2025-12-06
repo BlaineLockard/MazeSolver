@@ -1,10 +1,13 @@
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class WeightedMaze extends ComplexMaze {
     public class WeightedCell extends Cell {
         private double weight;
+        private double cost = 0.0;
+        private boolean partOfPath = false;
 
         public WeightedCell() {
             super();
@@ -14,17 +17,32 @@ public class WeightedMaze extends ComplexMaze {
             super(start, end, isVisited, r, c);
             this.weight = 1;
         }
-        public WeightedCell(boolean start, boolean end, boolean isVisited, int r, int c, double weight) {
-            super(start, end, isVisited, r, c);
+        public WeightedCell(boolean start, boolean end, boolean partOfPath, int r, int c, double weight) {
+            super(start, end, false, r, c);
             this.weight = weight;
+            this.partOfPath = partOfPath;
         }
+
+        @Override
+        public WeightedCell getNorthNeighbor() {return (WeightedCell) northNeighbor;}
+        @Override
+        public WeightedCell getSouthNeighbor() {return (WeightedCell) southNeighbor;}
+        @Override
+        public WeightedCell getEastNeighbor() {return (WeightedCell) eastNeighbor;}
+        @Override
+        public WeightedCell getWestNeighbor() {return (WeightedCell) westNeighbor;}
 
         public double getWeight() {return weight;}
         public void setWeight(int weight) {this.weight = weight;}
+        public double getCost() {return cost;}
+        public void setCost(double cost) {this.cost = cost;}
+        public boolean isPartOfPath() {return partOfPath;}
+        public void setPartOfPath(boolean partOfPath) {this.partOfPath = partOfPath;}
     }
 
     // a maze with weighted paths
     WeightedCell[][] maze;
+    private double cost = Double.POSITIVE_INFINITY;
 
     public WeightedMaze(){
         super();
@@ -51,14 +69,7 @@ public class WeightedMaze extends ComplexMaze {
                 }
                 System.out.println();
             }
-            /* 
-            for(int r = 0; r < rows; r++){
-                for(int c = 0; c < colls; c++){
-                    System.out.print(cellData[r][c] + ", ");
-                }
-                System.out.println();
-            }
-            */
+
             // Initialize maze array and add cells
             this.maze = new WeightedCell[rows][colls];
             createCell(0, 0, cellData);
@@ -74,15 +85,15 @@ public class WeightedMaze extends ComplexMaze {
     
     @Override
     public WeightedCell createCell(int r, int c, String[][] cellData){
+        // Check if cell already exists
         if (maze[r][c] != null){ 
-            //System.out.println("Cell at (" + r + ", " + c + ") already created.");
             return maze[r][c];
         }
-        //System.out.println("Creating cell at (" + r + ", " + c + ")");
+        // read cell data
         boolean isStart = false;
         boolean isEnd = false;
-        boolean visited = false;
-        double weight = Double.parseDouble(cellData[r][c].substring(6, 8));
+        boolean partOfPath = false;
+        double weight = Double.parseDouble(cellData[r][c].substring(6, 10));
 
         if (cellData[r][c].charAt(0) == '1'){
             isStart = true;
@@ -91,10 +102,12 @@ public class WeightedMaze extends ComplexMaze {
             isEnd = true;
         }
         if (cellData[r][c].charAt(4) == '1'){
-            visited = true;
+            partOfPath = true;
         }
-        WeightedCell newCell = new WeightedCell(isStart, isEnd, visited, r, c, weight);
-        System.out.print("Creating WeightedCell at (" + r + ", " + c + ") with weight " + weight + "\n");
+
+        WeightedCell newCell = new WeightedCell(isStart, isEnd, partOfPath, r, c, weight);
+
+        // Add neighbors
         int startIdx = 10;
         int endIdx = 13;
         maze[r][c] = newCell;
@@ -129,11 +142,105 @@ public class WeightedMaze extends ComplexMaze {
 
     }
 
+    @Override
     public void solveMaze(){
-        return;
+        // start timer
+        long startTime = System.currentTimeMillis();
+        WeightedCell startCell = null;
+        WeightedCell endCell = null;
+
+        // Find start cell
+        for(int r = 0; r < rows; r++){
+            for(int c = 0; c < colls; c++){
+                if(maze[r][c].isStart()){
+                    startCell = maze[r][c];
+                }
+            }
+        }
+
+        // call solving method
+        dijkstraSolve(startCell);
+
+        time = (System.currentTimeMillis() - startTime) / 1000.0;
+    }
+
+    private boolean dijkstraSolve(WeightedCell startCell){
+        // set starting cell cost to 0
+        // all other cells set to infinity
+        ArrayList<WeightedCell> unvisited = new ArrayList<>();
+        WeightedCell currentCell = startCell;
+        startCell.setCost(0);
+        startCell.setVisit(true);
+        for(int r = 0; r < rows; r++){
+            for(int c = 0; c < colls; c++){
+                if(maze[r][c] != startCell){
+                    maze[r][c].setCost(Double.POSITIVE_INFINITY);
+                    unvisited.add(maze[r][c]);
+                }
+            }
+        }
+
+        // while there are unvisited cells
+        while(!unvisited.isEmpty()){
+            // for each neighbor of current cell
+            for(int i = 0; i < currentCell.neighbors().size(); i++){
+                WeightedCell neighbor = (WeightedCell) currentCell.neighbors().get(i);
+                if(!neighbor.isVisited()){
+                    double tentativeCost = currentCell.getCost() + neighbor.getWeight();
+                    if(tentativeCost < neighbor.getCost()){
+                        neighbor.setCost(tentativeCost);
+                    }
+                }
+            }
+            // mark current cell as visited
+            currentCell.setVisit(true);
+            // remove current cell from unvisited
+            unvisited.remove(currentCell);
+            // set next current cell to unvisited cell with lowest cost
+            double lowestCost = Double.POSITIVE_INFINITY;
+            WeightedCell nextCell = null;
+            for(WeightedCell cell : unvisited){
+                if(cell.getCost() < lowestCost){
+                    lowestCost = cell.getCost();
+                    nextCell = cell;
+                }
+            }
+            if (nextCell == null){
+                break; // no reachable unvisited cells remain
+            }
+            currentCell = nextCell;
+
+            // check if current cell is end cell
+            if(currentCell.isEnd()){
+                this.cost = currentCell.getCost();
+                // retrace path to mark it
+                WeightedCell pathCell = currentCell;
+                while(!pathCell.isStart()){
+                    pathCell.setPartOfPath(true);
+                    // find neighbor with lowest cost
+                    double lowestNeighborCost = Double.POSITIVE_INFINITY;
+                    WeightedCell nextPathCell = null;
+                    for(int i = 0; i < pathCell.neighbors().size(); i++){
+                        WeightedCell neighbor = (WeightedCell) pathCell.neighbors().get(i);
+                        if(neighbor.getCost() < lowestNeighborCost){
+                            lowestNeighborCost = neighbor.getCost();
+                            nextPathCell = neighbor;
+                        }
+                    }
+                    pathCell = nextPathCell;
+                }
+                return true;
+            }
+
+
+        }
+
+
+        return false;
     }
 
     public void printMaze(){
+        System.out.println("Cost: " + this.cost);
         for(int r = 0; r < rows; r++){
             for(int i = 0; i < 3; i++){
                 for(int c = 0; c < colls; c++){
@@ -159,7 +266,7 @@ public class WeightedMaze extends ComplexMaze {
                         else if(maze[r][c].isEnd()){
                             System.out.print("\u001B[31m" + maze[r][c].weight + "\u001B[0m");
                         }
-                        else if(maze[r][c].isVisited()){
+                        else if(maze[r][c].isPartOfPath()){
                             System.out.print("\u001B[34m" + maze[r][c].weight + "\u001B[0m");
                         }
                         else{
@@ -204,7 +311,7 @@ public class WeightedMaze extends ComplexMaze {
                     outFile.print("0 0");
                 }
 
-                if(maze[r][c].isVisited()){
+                if(maze[r][c].isPartOfPath()){
                     outFile.print(" 1");
                 }
                 else{

@@ -22,6 +22,12 @@ public class WeightedMaze extends ComplexMaze {
             this.weight = weight;
             this.partOfPath = partOfPath;
         }
+        public WeightedCell(boolean start, boolean end, boolean isVisited, int r, int c, double weight, double cost,  boolean partOfPath) {
+            super(start, end, isVisited, r, c);
+            this.weight = weight;
+            this.cost = cost;
+            this.partOfPath = partOfPath;
+        }
 
         @Override
         public WeightedCell getNorthNeighbor() {return (WeightedCell) northNeighbor;}
@@ -58,9 +64,10 @@ public class WeightedMaze extends ComplexMaze {
             this.rows = Integer.parseInt(mazeData.get(0));
             this.colls = Integer.parseInt(mazeData.get(1));
             this.mazeType = mazeData.get(2).charAt(0);
-            this.time = Double.parseDouble(mazeData.get(3));
+            this.cost = Double.parseDouble(mazeData.get(3));
+            this.time = Double.parseDouble(mazeData.get(4));
             String[][] cellData = new String[rows][colls];
-            int dataIndex = 4;
+            int dataIndex = 5;
             // Read cell data into 2D array
             for (int r = 0; r < rows; r++){ 
                 for (int c = 0; c < colls; c++){
@@ -92,6 +99,7 @@ public class WeightedMaze extends ComplexMaze {
         // read cell data
         boolean isStart = false;
         boolean isEnd = false;
+        boolean isVisited = false;
         boolean partOfPath = false;
         double weight = Double.parseDouble(cellData[r][c].substring(6, 10));
 
@@ -105,7 +113,7 @@ public class WeightedMaze extends ComplexMaze {
             partOfPath = true;
         }
 
-        WeightedCell newCell = new WeightedCell(isStart, isEnd, partOfPath, r, c, weight);
+        WeightedCell newCell = new WeightedCell(isStart, isEnd, isVisited, r, c, weight, 0, partOfPath);
 
         // Add neighbors
         int startIdx = 10;
@@ -113,7 +121,6 @@ public class WeightedMaze extends ComplexMaze {
         maze[r][c] = newCell;
         while(endIdx <= cellData[r][c].length()){
             String neighbor = cellData[r][c].substring(startIdx, endIdx);
-            System.out.print(cellData[r][c] + " -> Neighbor: " + neighbor + "\n");
             int neighborRow = neighbor.charAt(0) - 48;
             int neighborColl = neighbor.charAt(2) - 48;
             if(neighborRow == r-1 && neighborColl == c){ // North
@@ -147,7 +154,6 @@ public class WeightedMaze extends ComplexMaze {
         // start timer
         long startTime = System.currentTimeMillis();
         WeightedCell startCell = null;
-        WeightedCell endCell = null;
 
         // Find start cell
         for(int r = 0; r < rows; r++){
@@ -171,6 +177,7 @@ public class WeightedMaze extends ComplexMaze {
         WeightedCell currentCell = startCell;
         startCell.setCost(0);
         startCell.setVisit(true);
+        startCell.setPartOfPath(false);
         for(int r = 0; r < rows; r++){
             for(int c = 0; c < colls; c++){
                 if(maze[r][c] != startCell){
@@ -232,15 +239,13 @@ public class WeightedMaze extends ComplexMaze {
                 return true;
             }
 
-
         }
-
 
         return false;
     }
 
     public void printMaze(){
-        System.out.println("Cost: " + this.cost);
+        System.out.println("Maze (" + rows + " x " + colls + ") solved in " + time + " seconds with cost " + cost + ": ");
         for(int r = 0; r < rows; r++){
             for(int i = 0; i < 3; i++){
                 for(int c = 0; c < colls; c++){
@@ -298,7 +303,7 @@ public class WeightedMaze extends ComplexMaze {
     public void saveMaze(String fileName) throws IOException{
         PrintWriter outFile = new PrintWriter(fileName);
 
-        outFile.println(this.rows + "," + this.colls + "," + this.mazeType + "," + this.time);
+        outFile.println(this.rows + "," + this.colls + "," + this.mazeType + ","  + this.cost + "," + this.time);
         for(int r = 0; r < this.rows; r++){
             for(int c = 0; c < this.colls; c++){
                 if(maze[r][c].isStart()){

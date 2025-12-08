@@ -145,6 +145,7 @@ public class SimpleMaze extends Maze {
 
     
     public void printMaze(){
+        System.out.println("Maze (" + rows + " x " + colls + ") solved in " + time + " seconds: ");
         for(int r = 0; r < rows; r++){
             for(int i = 0; i < 3; i++){
                 for(int c = 0; c < colls; c++){

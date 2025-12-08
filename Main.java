@@ -12,7 +12,7 @@ public class Main {
 
         for(int i = 1; i < mazes.size()+1; i++){
             try{
-                if (mazes.get(i-1).getTime() <= 0.0){
+                if (mazes.get(i-1).getTime() <= -10.0){
                     mazes.get(i-1).solveMaze();
                 }
                 mazes.get(i-1).printMaze();

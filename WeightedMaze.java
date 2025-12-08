@@ -1,3 +1,4 @@
+import com.sun.jdi.ObjectCollectedException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Array;
@@ -39,7 +40,7 @@ public class WeightedMaze extends ComplexMaze {
         public WeightedCell getWestNeighbor() {return (WeightedCell) westNeighbor;}
 
         public double getWeight() {return weight;}
-        public void setWeight(int weight) {this.weight = weight;}
+        public void setWeight(double weight) {this.weight = weight;}
         public double getCost() {return cost;}
         public void setCost(double cost) {this.cost = cost;}
         public boolean isPartOfPath() {return partOfPath;}
@@ -56,6 +57,14 @@ public class WeightedMaze extends ComplexMaze {
 
     public WeightedMaze(ArrayList<String> mazeData){
         this.readMaze(mazeData);
+    }
+
+    public WeightedMaze(int rows, int colls){
+        this.mazeType = 'w';
+        this.rows = rows;
+        this.colls = colls;
+        generateMaze(rows, colls);
+        solveMaze();
     }
 
     @Override
@@ -94,6 +103,7 @@ public class WeightedMaze extends ComplexMaze {
             return maze[r][c];
         }
         // read cell data
+
         boolean isStart = false;
         boolean isEnd = false;
         boolean isVisited = false;
@@ -111,11 +121,54 @@ public class WeightedMaze extends ComplexMaze {
         }
 
         WeightedCell newCell = new WeightedCell(isStart, isEnd, isVisited, r, c, weight, 0, partOfPath);
+        maze[r][c] = newCell;
 
         // Add neighbors
-        int startIdx = 10;
-        int endIdx = 13;
-        maze[r][c] = newCell;
+        // have to account for double digit positions, i.e. 10-12
+        //parse first int before the -
+
+        int firstIntStart = 10;
+        int firstIntEnd = cellData[r][c].indexOf('-', firstIntStart);
+        int secondIntStart = firstIntEnd + 1;
+        int secondIntEnd = cellData[r][c].indexOf(' ', secondIntStart);
+        if (secondIntEnd == -1){
+            secondIntEnd = cellData[r][c].length();
+        }
+
+        while(firstIntStart < cellData[r][c].length()){
+            String neighbor = cellData[r][c].substring(firstIntStart, secondIntEnd);
+            int neighborRow = Integer.parseInt(neighbor.substring(0, neighbor.indexOf('-')));
+            int neighborColl = Integer.parseInt(neighbor.substring(neighbor.indexOf('-') + 1));
+
+            if(neighborRow == r-1 && neighborColl == c){ // North
+                newCell.northNeighbor = createCell(neighborRow, neighborColl, cellData);
+            }
+            else if(neighborRow == r+1 && neighborColl == c){ // South
+                newCell.southNeighbor = createCell(neighborRow, neighborColl, cellData);
+            }
+            else if(neighborRow == r && neighborColl == c+1){ // East
+                newCell.eastNeighbor = createCell(neighborRow, neighborColl, cellData);
+            }
+            else if(neighborRow == r && neighborColl == c-1){ // West
+                newCell.westNeighbor = createCell(neighborRow, neighborColl, cellData);
+            }
+            else{
+                throw new IllegalArgumentException("Invalid neighbor coordinates: " + neighbor);
+            }
+
+            firstIntStart = secondIntEnd + 1;
+            firstIntEnd = cellData[r][c].indexOf('-', firstIntStart);
+            if (firstIntEnd == -1){
+                break;
+            }
+            secondIntStart = firstIntEnd + 1;
+            secondIntEnd = cellData[r][c].indexOf(' ', secondIntStart);
+            if (secondIntEnd == -1){
+                secondIntEnd = cellData[r][c].length();
+            }
+        }
+
+        /*
         while(endIdx <= cellData[r][c].length()){
             String neighbor = cellData[r][c].substring(startIdx, endIdx);
             int neighborRow = neighbor.charAt(0) - 48;
@@ -138,13 +191,114 @@ public class WeightedMaze extends ComplexMaze {
             }
             startIdx += 4;
             endIdx += 4;
-        }
+        } */
         return newCell;
     }
 
-    @Override
-    public void generateMaze(){
 
+    public void generateMaze(int r, int c){ 
+        
+        maze = new WeightedCell[r][c];
+        System.out.println(maze.length + " " + maze[0].length);
+        
+        for(int row = 0; row < r; row++){
+            for(int col = 0; col < c; col++){
+                generateCell(row, col);
+            }
+        }
+        
+
+    }
+
+    private WeightedCell generateCell (int r, int c){
+        if (maze[r][c] != null){
+            return maze[r][c];
+        }
+        maze[r][c] = new WeightedCell();
+        maze[r][c].position[0] = r;
+        maze[r][c].position[1] = c;
+        double newWeight = Math.random() * 9.8 + 0.1; // weights between 0.1 and 9.9
+        newWeight = Math.round(newWeight * 10.0) / 10.0; // round to tenths place
+        maze[r][c].setWeight(newWeight);
+        // set start and end cells
+        if (r == 0 && c == 0){
+            maze[r][c].setStart(true);
+        }
+        else if (r == rows - 1 && c == colls - 1){
+            maze[r][c].setEnd(true);
+        }
+
+        // check if neighbor is possible, then give 50% chance of creating neighbor
+        if (r > 0){ // north neighbor
+            if (Math.random() < 0.5 || (r == rows-1 && c == colls-1)){ // ensure end cell has a north neighbor
+                if(maze[r-1][c] == null){
+                    maze[r-1][c] = generateCell(r-1, c);
+                }
+                maze[r][c].northNeighbor = maze[r-1][c];
+                maze[r-1][c].southNeighbor = maze[r][c];
+            }
+        }
+        if (r < rows-1){ // south neighbor
+            if (Math.random() < 0.5 || (r == 0 && c == 0)){ // ensure start cell has a south neighbor
+                if(maze[r+1][c] == null){
+                    maze[r+1][c] = generateCell(r+1, c);
+                }
+                maze[r][c].southNeighbor = maze[r+1][c];
+                maze[r+1][c].northNeighbor = maze[r][c];
+            }
+        }
+        if (c < colls-1){ // east neighbor
+            if (Math.random() < 0.5){
+                if(maze[r][c+1] == null){
+                    maze[r][c+1] = generateCell(r, c+1);
+                }
+                maze[r][c].eastNeighbor = maze[r][c+1];
+                maze[r][c+1].westNeighbor = maze[r][c];
+            }
+        }
+        if (c > 0){ // west neighbor
+            if (Math.random() < 0.5){
+                if(maze[r][c-1] == null){
+                    maze[r][c-1] = generateCell(r, c-1);
+                }
+                maze[r][c].westNeighbor = maze[r][c-1];
+                maze[r][c-1].eastNeighbor = maze[r][c];
+            }
+        }
+
+        // if nothing gets made, make at least one neighbor
+        if(maze[r][c].degree() == 0){
+            if (r > 0){ // north neighbor
+                if(maze[r-1][c] == null){
+                    maze[r-1][c] = generateCell(r-1, c);
+                }
+                maze[r][c].northNeighbor = maze[r-1][c];
+                maze[r-1][c].southNeighbor = maze[r][c];
+            }
+            else if (r < rows-1){ // south neighbor
+                if(maze[r+1][c] == null){
+                    maze[r+1][c] = generateCell(r+1, c);
+                }
+                maze[r][c].southNeighbor = maze[r+1][c];
+                maze[r+1][c].northNeighbor = maze[r][c];
+            }
+            else if (c < colls-1){ // east neighbor
+                if(maze[r][c+1] == null){
+                    maze[r][c+1] = generateCell(r, c+1);
+                }
+                maze[r][c].eastNeighbor = maze[r][c+1];
+                maze[r][c+1].westNeighbor = maze[r][c];
+            }
+            else if (c > 0){ // west neighbor
+                if(maze[r][c-1] == null){
+                    maze[r][c-1] = generateCell(r, c-1);
+                }
+                maze[r][c].westNeighbor = maze[r][c-1];
+                maze[r][c-1].eastNeighbor = maze[r][c];
+            }
+        }
+
+        return maze[r][c];
     }
 
     @Override
@@ -244,7 +398,8 @@ public class WeightedMaze extends ComplexMaze {
 
         return false;
     }
-
+    
+    @Override
     public void printMaze(){
         System.out.println("Maze (" + rows + " x " + colls + ") solved in " + time + " seconds with cost " + cost + ": ");
         for(int r = 0; r < rows; r++){
@@ -301,50 +456,49 @@ public class WeightedMaze extends ComplexMaze {
         }
     }
 
+    @Override
     public void saveMaze(String fileName) throws IOException{
-        PrintWriter outFile = new PrintWriter(fileName);
-
-        outFile.println(this.rows + "," + this.colls + "," + this.mazeType + ","  + this.cost + "," + this.time);
-        for(int r = 0; r < this.rows; r++){
-            for(int c = 0; c < this.colls; c++){
-                if(maze[r][c].isStart()){
-                    outFile.print("1 0");
+        try (PrintWriter outFile = new PrintWriter(fileName)) {
+            outFile.printf("%d,%d,%s,%.2f,%.2f\n", this.rows, this.colls, this.mazeType, this.cost, this.time);
+            for(int r = 0; r < this.rows; r++){
+                for(int c = 0; c < this.colls; c++){
+                    if(maze[r][c].isStart()){
+                        outFile.print("1 0");
+                    }
+                    else if (maze[r][c].isEnd()){
+                        outFile.print("0 1");
+                    }
+                    else{
+                        outFile.print("0 0");
+                    }
+                    
+                    if(maze[r][c].isPartOfPath()){
+                        outFile.print(" 1");
+                    }
+                    else{
+                        outFile.print(" 0");
+                    }
+                    outFile.printf(" %.1f", maze[r][c].getWeight());
+                    
+                    if(maze[r][c].hasNorth()){
+                        outFile.print(" " + maze[r][c].northNeighbor.position[0] + "-" + maze[r][c].northNeighbor.position[1]);
+                    }
+                    if(maze[r][c].hasWest()){
+                        outFile.print(" " + maze[r][c].westNeighbor.position[0] + "-" + maze[r][c].westNeighbor.position[1]);
+                    }
+                    if(maze[r][c].hasEast()){
+                        outFile.print(" " + maze[r][c].eastNeighbor.position[0] + "-" + maze[r][c].eastNeighbor.position[1]);
+                    }
+                    if(maze[r][c].hasSouth()){
+                        outFile.print(" " + maze[r][c].southNeighbor.position[0] + "-" + maze[r][c].southNeighbor.position[1]);
+                    }
+                    
+                    if(c != colls-1)
+                        outFile.print(",");
                 }
-                else if (maze[r][c].isEnd()){
-                    outFile.print("0 1");
-                }
-                else{
-                    outFile.print("0 0");
-                }
-
-                if(maze[r][c].isPartOfPath()){
-                    outFile.print(" 1");
-                }
-                else{
-                    outFile.print(" 0");
-                }
-                outFile.printf(" %.1f", maze[r][c].getWeight());
-
-                if(maze[r][c].hasNorth()){
-                    outFile.print(" " + maze[r][c].northNeighbor.position[0] + "-" + maze[r][c].northNeighbor.position[1]);
-                }
-                if(maze[r][c].hasWest()){
-                    outFile.print(" " + maze[r][c].westNeighbor.position[0] + "-" + maze[r][c].westNeighbor.position[1]);
-                }
-                if(maze[r][c].hasEast()){
-                    outFile.print(" " + maze[r][c].eastNeighbor.position[0] + "-" + maze[r][c].eastNeighbor.position[1]);
-                }
-                if(maze[r][c].hasSouth()){
-                    outFile.print(" " + maze[r][c].southNeighbor.position[0] + "-" + maze[r][c].southNeighbor.position[1]);
-                }
-
-                if(c != colls-1)
-                    outFile.print(",");
+                outFile.print("\n");
             }
-            outFile.print("\n");
         }
-
-        outFile.close();
     }
 
     public double getCost() {

@@ -121,7 +121,7 @@ public class SimpleMaze extends Maze {
 
         time = (System.currentTimeMillis() - startTime) / 1000.0;
         if (time <= 0.0){
-            time = 0.01;
+            time = 0.001;
         }
         System.out.println("Maze solved in " + time + " seconds.");
     }

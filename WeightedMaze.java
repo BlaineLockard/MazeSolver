@@ -166,6 +166,9 @@ public class WeightedMaze extends ComplexMaze {
         dijkstraSolve(startCell);
 
         time = (System.currentTimeMillis() - startTime) / 1000.0;
+        if(time <= 0.0){
+            time = 0.001;
+        }
     }
 
     private boolean dijkstraSolve(WeightedCell startCell){

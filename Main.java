@@ -32,10 +32,26 @@ public class Main {
                 mazes.get(mazeNum).printMaze();
             }
             else if(input.equals("3")){
-                System.out.println("What size should the maze be? (e.g. 10 for a 10x10 maze)");
-                int size = Integer.parseInt(si.nextLine());
-                WeightedMaze newMaze = new WeightedMaze(size, size);
+                WeightedMaze newMaze;
+                System.out.println("Enter Row amount: ");
+                int rows = Integer.parseInt(si.nextLine());
+                System.out.println("Enter Column amount: ");
+                int cols = Integer.parseInt(si.nextLine());
+                System.out.println("Enter Start Row (Enter nothing to use default): ");
+                String startRowInput = si.nextLine();
+                System.out.println("Enter Start Column (Enter nothing to use default): ");
+                String startColInput = si.nextLine();
+                System.out.println("Enter End Row (Enter nothing to use default): ");
+                String endRowInput = si.nextLine();
+                System.out.println("Enter End Column (Enter nothing to use default): ");
+                String endColInput = si.nextLine();
 
+                int startRow = startRowInput.isEmpty() ? 0 : Integer.parseInt(startRowInput) - 1;
+                int startCol = startColInput.isEmpty() ? 0 : Integer.parseInt(startColInput) - 1;
+                int endRow = endRowInput.isEmpty() ? rows - 1 : Integer.parseInt(endRowInput) - 1;
+                int endCol = endColInput.isEmpty() ? cols - 1 : Integer.parseInt(endColInput) - 1;
+
+                newMaze = new WeightedMaze(rows, cols, startCol, startRow, endCol, endRow);
                 mazes.add(newMaze);
                 System.out.println("Your new Maze: ");
                 newMaze.printMaze();

@@ -1,7 +1,5 @@
-import com.sun.jdi.ObjectCollectedException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class WeightedMaze extends ComplexMaze {
@@ -50,6 +48,7 @@ public class WeightedMaze extends ComplexMaze {
     // a maze with weighted paths
     WeightedCell[][] maze;
     private double cost = Double.POSITIVE_INFINITY;
+    int startRow, startCol, endRow, endCol;
 
     public WeightedMaze(){
         super();
@@ -63,9 +62,27 @@ public class WeightedMaze extends ComplexMaze {
         this.mazeType = 'w';
         this.rows = rows;
         this.colls = colls;
+        this.startRow = 0;
+        this.startCol = 0;
+        this.endRow = rows - 1;
+        this.endCol = colls - 1;
         generateMaze(rows, colls);
         solveMaze();
     }
+
+    public WeightedMaze(int rows, int colls, int startCol, int startRow, int endCol, int endRow){
+        this.mazeType = 'w';
+        this.rows = rows;
+        this.colls = colls;
+        this.startRow = startRow;
+        this.startCol = startCol;
+        this.endRow = endRow;
+        this.endCol = endCol;
+        generateMaze(rows, colls);
+        solveMaze();
+    }
+
+    
 
     @Override
     public void readMaze(ArrayList<String> mazeData){
@@ -83,7 +100,6 @@ public class WeightedMaze extends ComplexMaze {
                     cellData[r][c] = mazeData.get(dataIndex);
                     dataIndex++;
                 }
-                System.out.println();
             }
 
             // Initialize maze array and add cells
@@ -199,7 +215,6 @@ public class WeightedMaze extends ComplexMaze {
     public void generateMaze(int r, int c){ 
         
         maze = new WeightedCell[r][c];
-        System.out.println(maze.length + " " + maze[0].length);
         
         for(int row = 0; row < r; row++){
             for(int col = 0; col < c; col++){
@@ -221,10 +236,11 @@ public class WeightedMaze extends ComplexMaze {
         newWeight = Math.round(newWeight * 10.0) / 10.0; // round to tenths place
         maze[r][c].setWeight(newWeight);
         // set start and end cells
-        if (r == 0 && c == 0){
+        if (r == startRow && c == startCol){
             maze[r][c].setStart(true);
+            maze[r][c].setWeight(0);
         }
-        else if (r == rows - 1 && c == colls - 1){
+        else if (r == endRow && c == endCol){
             maze[r][c].setEnd(true);
         }
 
